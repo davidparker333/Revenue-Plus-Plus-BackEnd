@@ -28,8 +28,8 @@ def create_app(config_class=Config):
     login.login_message_category = 'danger'
 
     with app.app_context():
-        from app.blueprints.auth import bp as auth
-        app.register_blueprint(auth)
+        from app.blueprints.api import bp as api
+        app.register_blueprint(api)
 
         # from app.blueprints.blog import bp as blog
         # app.register_blueprint(blog)

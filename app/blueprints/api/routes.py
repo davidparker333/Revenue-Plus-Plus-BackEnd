@@ -1,6 +1,6 @@
-from . import bp as auth
+from . import bp as api
 from app import db
 
-@auth.route('/')
+@api.route('/')
 def hello_world():
     return "Hello World"
