@@ -25,10 +25,10 @@ class User(db.Model, UserMixin):
     token_expiration = db.Column(db.DateTime(), default=datetime.utcnow())
     leads = db.relationship('Lead', backref='owner', lazy='dynamic')
 
-    def __init__(self, email, username, password):
+    def __init__(self, email=None, username=None, password=None):
         self.email = email
         self.username = username
-        self.password = generate_password_hash(password)
+        self.password = password
 
     def __repr__(self):
         return f'<User Object | {self.username}>'
@@ -66,7 +66,18 @@ class User(db.Model, UserMixin):
     def from_dict(self, data):
         for field in ['email', 'password', 'username']:
             if field in data:
-                setattr(self, field, data[field])
+                if field == 'password':
+                    setattr(self, field, generate_password_hash(data[field]))
+                else:
+                    setattr(self, field, data[field])
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
 
 
 # #############################################
@@ -89,7 +100,7 @@ class Lead(db.Model):
     opportunity = db.relationship('Opportunity', backref='lead', lazy='dynamic')
     activity = db.relationship('Activity', backref='lead', lazy='dynamic')
 
-    def __init__(self, first_name, last_name, phone_number, business_name, address, status, hot, user_id, open=True, cell_phone_number=None):
+    def __init__(self, first_name=None, last_name=None, phone_number=None, business_name=None, address=None, status=None, hot=None, user_id=None, open=True, cell_phone_number=None):
        self.first_name = first_name
        self.last_name = last_name
        self.phone_number = phone_number
@@ -155,7 +166,7 @@ class Opportunity(db.Model):
     event = db.relationship('Event', backref='opportunity', lazy='dynamic')
     activity = db.relationship('Activity', backref='opportunity', lazy='dynamic')
 
-    def __init__(self, first_name, last_name, phone_number, business_name, address, status, value, lead_id, open=True, cell_phone_number=None):
+    def __init__(self, first_name=None, last_name=None, phone_number=None, business_name=None, address=None, status=None, value=None, lead_id=None, open=True, cell_phone_number=None):
         self.first_name = first_name
         self.last_name = last_name
         self.phone_number = phone_number
@@ -213,7 +224,7 @@ class Event(db.Model):
     last_name = db.Column(db.String(150))
     opportunity_id = db.Column(db.Integer, db.ForeignKey('opportunity.id'))
 
-    def __init__(self, date_time, event_name, first_name, last_name, opportunity_id=None):
+    def __init__(self, date_time=None, event_name=None, first_name=None, last_name=None, opportunity_id=None):
         self.date_time = date_time
         self.event_name = event_name
         self.first_name = first_name
@@ -259,3 +270,29 @@ class Activity(db.Model):
     notes = db.Column(db.String(2000), nullable=False)
     lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'))
     opportunity_id = db.Column(db.Integer, db.ForeignKey('opportunity.id'))
+
+    def __init__(self, type=None, date=None, notes=None, lead_id=None, opportunity_id=None):
+        self.type = type
+        self.date = date
+        self.notes = notes
+        self.lead_id = lead_id
+        self.opportunity_id = opportunity_id
+
+    def __repr__(self):
+        return f'<Activity Object | {self.type}>'
+
+    def __str__(self):
+        return f'Activity - {self.id} - {self.type}'
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "type": self.type,
+            "date": self.date,
+            "notes": self.notes
+        }
+
+    def from_dict(self, data):
+        for field in ['type', 'date', 'notes', 'lead_id', 'opportunity_id']:
+            if field in data:
+                setattr(self, field, data[field])
