@@ -23,7 +23,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(255), nullable=False)
     token = db.Column(db.String(32), index=True)
     token_expiration = db.Column(db.DateTime(), default=datetime.utcnow())
-    leads = db.Relationship('Lead', backref='owner', lazy='dynamic')
+    leads = db.relationship('Lead', backref='owner', lazy='dynamic')
 
     def __init__(self, email, username, password):
         self.email = email
@@ -86,8 +86,8 @@ class Lead(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     open = db.Column(db.Boolean(), nullable=False)
     date_created = db.Column(db.DateTime(), default=datetime.utcnow())
-    opportunity = db.Relationship('Opportunity', backref='lead', lazy='dynamic')
-    activity = db.Relationship('Activity', backref='lead', lazy='dynamic')
+    opportunity = db.relationship('Opportunity', backref='lead', lazy='dynamic')
+    activity = db.relationship('Activity', backref='lead', lazy='dynamic')
 
     def __init__(self, first_name, last_name, phone_number, business_name, address, status, hot, user_id, open=True, cell_phone_number=None):
        self.first_name = first_name
@@ -152,8 +152,8 @@ class Opportunity(db.Model):
     lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'), nullable=False)
     date_created = db.Column(db.DateTime(), default=datetime.utcnow())
     open = db.Column(db.Boolean(), nullable=False)
-    event = db.Relationship('Event', backref='opportunity', lazy='dynamic')
-    activity = db.Relationship('Activity', backref='opportunity', lazy='dynamic')
+    event = db.relationship('Event', backref='opportunity', lazy='dynamic')
+    activity = db.relationship('Activity', backref='opportunity', lazy='dynamic')
 
     def __init__(self, first_name, last_name, phone_number, business_name, address, status, value, lead_id, open=True, cell_phone_number=None):
         self.first_name = first_name
