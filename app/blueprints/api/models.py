@@ -133,7 +133,7 @@ class Lead(db.Model):
         }
 
     def from_dict(self, data):
-        for field in ['first_name', 'last_name', 'phone_number', 'cell_phone_number', 'business_name', 'address', 'status', 'hot']:
+        for field in ['first_name', 'last_name', 'phone_number', 'cell_phone_number', 'business_name', 'address', 'status', 'hot', 'user_id']:
             if field in data:
                 setattr(self, field, data[field])
 
