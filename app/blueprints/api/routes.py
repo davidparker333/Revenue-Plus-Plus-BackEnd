@@ -88,3 +88,11 @@ def edit_lead(id):
         lead.from_dict(data)
         lead.save()
         return jsonify(lead.to_dict())
+
+# Delete Lead
+@api.route('/delete/lead/<int:id>', methods=['DELETE'])
+@token_auth.login_required
+def delete_lead(id):
+    lead = Lead.query.get(id)
+    lead.delete()
+    return jsonify({"status": "deleted"})
