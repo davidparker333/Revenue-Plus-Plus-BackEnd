@@ -296,3 +296,11 @@ class Activity(db.Model):
         for field in ['type', 'date', 'notes', 'lead_id', 'opportunity_id']:
             if field in data:
                 setattr(self, field, data[field])
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()

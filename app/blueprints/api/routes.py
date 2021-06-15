@@ -96,3 +96,26 @@ def delete_lead(id):
     lead = Lead.query.get(id)
     lead.delete()
     return jsonify({"status": "deleted"})
+
+# Create Lead Activity
+@api.route('/newactivity/lead/<int:id>', methods=['POST'])
+@token_auth.login_required
+def post_activity_lead(id):
+    lead = Lead.query.get(id)
+    activity = Activity()
+    data = request.get_json()
+    activity.from_dict(data)
+    activity.lead_id = lead.id
+    activity.save()
+    return jsonify(activity.to_dict())
+
+# Get Activity - Lead
+@api.route('/getactivity/lead/<int:id>')
+@token_auth.login_required
+def get_activity_lead(id):
+    lead = Lead.query.get(id)
+    if lead.user_id != token_auth.current_user().id:
+        return abort(403)
+    activity = Activity.query.filter(Activity.lead_id == id).order_by(desc('date'))
+    return jsonify([a.to_dict() for a in activity])
+        
