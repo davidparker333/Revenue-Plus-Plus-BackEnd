@@ -127,7 +127,7 @@ class Lead(db.Model):
             "cell_phone_number": self.cell_phone_number,
             "business_name": self.business_name,
             "address": self.address,
-            "status": self.address,
+            "status": self.status,
             "hot": self.hot,
             "date_created": self.date_created
         }

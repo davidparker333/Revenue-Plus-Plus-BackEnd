@@ -26,4 +26,4 @@ def get_token():
     user = basic_auth.current_user()
     token = basic_auth.current_user().get_token()
     db.session.commit()
-    return jsonify({'token': token, 'user_id': user.id})
+    return jsonify({'token': token, 'expiration': user.token_expiration})
