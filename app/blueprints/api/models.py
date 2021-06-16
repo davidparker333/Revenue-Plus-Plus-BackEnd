@@ -24,6 +24,7 @@ class User(db.Model, UserMixin):
     token = db.Column(db.String(32), index=True)
     token_expiration = db.Column(db.DateTime(), default=datetime.utcnow())
     leads = db.relationship('Lead', backref='owner', lazy='dynamic')
+    opportunities = db.relationship('Opportunity', backref='owner', lazy='dynamic')
 
     def __init__(self, email=None, username=None, password=None):
         self.email = email
@@ -156,6 +157,7 @@ class Lead(db.Model):
         opportunity.status = "Meeting Scheduled"
         opportunity.value = 0
         opportunity.lead_id = self.id
+        opportunity.user_id = self.user_id
         self.open = False
         opportunity.save()
         activities = Activity.query.filter(Activity.lead_id == self.id)
@@ -180,6 +182,7 @@ class Opportunity(db.Model):
     status = db.Column(db.String(100), nullable=False)
     value = db.Column(db.Float(), nullable=False)
     lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     date_created = db.Column(db.DateTime(), default=datetime.utcnow())
     open = db.Column(db.Boolean(), nullable=False)
     event = db.relationship('Event', backref='opportunity', lazy='dynamic')

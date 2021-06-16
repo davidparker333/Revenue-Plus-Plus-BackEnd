@@ -1,4 +1,3 @@
-from os import abort
 from . import bp as api
 from app import db
 from flask import request, jsonify, json, abort
@@ -23,7 +22,9 @@ def register():
 def home():
     recent_leads = Lead.query.filter(Lead.user_id == token_auth.current_user().id).filter(Lead.open == True).order_by(desc('date_created')).limit(5)
     recent_leads = [l.to_dict() for l in recent_leads]
-    return jsonify([recent_leads])
+    recent_opps = Opportunity.query.filter(Opportunity.user_id == token_auth.current_user().id).filter(Opportunity.open == True).order_by(desc('date_created')).limit(5)
+    recent_opps = [o.to_dict() for o in recent_opps]
+    return jsonify([recent_leads, recent_opps])
 
 # Create Lead
 @api.route('/newlead', methods=['POST'])
@@ -90,11 +91,13 @@ def edit_lead(id):
         return jsonify(lead.to_dict())
 
 # Delete Lead
-@api.route('/delete/lead/<int:id>', methods=['DELETE'])
+@api.route('/delete/lead/<int:id>', methods=['POST'])
 @token_auth.login_required
 def delete_lead(id):
     lead = Lead.query.get(id)
-    lead.delete()
+    lead.open = False
+    lead.status = "Closed Lost"
+    lead.save()
     return jsonify({"status": "deleted"})
 
 # Create Lead Activity
@@ -134,3 +137,18 @@ def convert_lead(id):
     meeting.opportunity_id = opportunity.id
     meeting.save()
     return jsonify([opportunity.to_dict(), meeting.to_dict()])
+
+# Get all opportunities
+@api.route('/allopenopportunities')
+@token_auth.login_required
+def all_open_opportunities():
+    opps = Opportunity.query.filter(Opportunity.user_id == token_auth.current_user().id).filter(Opportunity.open == True).order_by(desc('date_created'))
+    return jsonify([o.to_dict() for o in opps])
+
+# Get all opportunities created less than 30 days ago
+@api.route('/openopportunitiesthismonth')
+@token_auth.login_required
+def fresh_open_opportunities():
+    this_month = datetime.today() - timedelta(days=30)
+    opps = Opportunity.query.filter(Opportunity.user_id == token_auth.current_user().id).filter(Opportunity.open == True).filter(Opportunity.date_created > this_month).order_by(desc('date_created'))
+    return jsonify([o.to_dict() for o in opps])
