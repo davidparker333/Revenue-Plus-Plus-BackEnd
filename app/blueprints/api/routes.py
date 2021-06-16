@@ -152,3 +152,39 @@ def fresh_open_opportunities():
     this_month = datetime.today() - timedelta(days=30)
     opps = Opportunity.query.filter(Opportunity.user_id == token_auth.current_user().id).filter(Opportunity.open == True).filter(Opportunity.date_created > this_month).order_by(desc('date_created'))
     return jsonify([o.to_dict() for o in opps])
+
+# Get a single opportunity
+@api.route('/opportunities/<int:id>')
+@token_auth.login_required
+def single_opp(id):
+    opp = Opportunity.query.get(id)
+    if opp.user_id != token_auth.current_user().id:
+        return abort(403)
+    else:
+        return jsonify(opp.to_dict())
+
+# Edit Opportunity
+@api.route('/edit/opportunity/<int:id>', methods=['POST'])
+@token_auth.login_required
+def edit_opportunity(id):
+    opp = Opportunity.query.get(id)
+    if opp.user_id != token_auth.current_user().id:
+        return abort(403)
+    else:
+        data = request.get_json()
+        opp.from_dict(data)
+        opp.save()
+        return jsonify(opp.to_dict())
+
+# Close Won Opportunity
+@api.route('/close/won/opportunity/<int:id>', methods=['POST'])
+@token_auth.login_required
+def closed_won(id):
+    opp = Opportunity.query.get(id)
+    if opp.user_id != token_auth.current_user().id:
+        return abort(403)
+    else:
+        opp.open = False
+        opp.status = "Closed Won"
+        opp.save()
+    return jsonify(opp.to_dict())
