@@ -144,6 +144,25 @@ class Lead(db.Model):
     def delete(self):
         db.session.delete(self)
         db.session.commit()
+
+    def convert(self):
+        opportunity = Opportunity()
+        opportunity.first_name = self.first_name
+        opportunity.last_name = self.last_name
+        opportunity.phone_number = self.phone_number
+        opportunity.cell_phone_number = self.cell_phone_number
+        opportunity.business_name = self.business_name
+        opportunity.address = self.address
+        opportunity.status = "Meeting Scheduled"
+        opportunity.value = 0
+        opportunity.lead_id = self.id
+        self.open = False
+        opportunity.save()
+        activities = Activity.query.filter(Activity.lead_id == self.id)
+        for activity in activities:
+            activity.opportunity_id = opportunity.id
+            activity.save()
+
     
 
 # #############################################

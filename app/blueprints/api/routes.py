@@ -119,3 +119,18 @@ def get_activity_lead(id):
     activity = Activity.query.filter(Activity.lead_id == id).order_by(desc('date'))
     return jsonify([a.to_dict() for a in activity])
         
+# Convert Lead to Opp
+@api.route('/convert/<int:id>', methods=['POST'])
+@token_auth.login_required
+def convert_lead(id):
+    lead = Lead.query.get(id)
+    if lead.user_id != token_auth.current_user().id:
+        return abort(403)
+    lead.convert()
+    opportunity = Opportunity.query.filter(Opportunity.lead_id == lead.id).first()
+    meeting = Event()
+    data = request.get_json()
+    meeting.from_dict(data)
+    meeting.opportunity_id = opportunity.id
+    meeting.save()
+    return jsonify([opportunity.to_dict(), meeting.to_dict()])
