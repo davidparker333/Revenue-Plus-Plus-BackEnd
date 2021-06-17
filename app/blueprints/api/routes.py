@@ -1,8 +1,7 @@
 from . import bp as api
 from app import db
-from flask import request, jsonify, json, abort
-from datetime import date, datetime, time, timedelta
-from flask_login import current_user
+from flask import request, jsonify, abort
+from datetime import date, datetime, timedelta
 from app.blueprints.api.models import User, Lead, Opportunity, Activity, Event
 from sqlalchemy import desc
 from .auth import token_auth
@@ -20,14 +19,17 @@ def register():
 @api.route('/crmhome', methods=['GET'])
 @token_auth.login_required
 def home():
-    this_month = datetime.today() - timedelta(days=30)
+    today = datetime.today()
+    tomorrow = datetime.today() + timedelta(days=1)
     recent_leads = Lead.query.filter(Lead.user_id == token_auth.current_user().id).filter(Lead.open == True).order_by(desc('date_created')).limit(5)
     recent_leads = [l.to_dict() for l in recent_leads]
     recent_opps = Opportunity.query.filter(Opportunity.user_id == token_auth.current_user().id).filter(Opportunity.open == True).order_by(desc('date_created')).limit(5)
     recent_opps = [o.to_dict() for o in recent_opps]
     closed_opps = Opportunity.query.filter(Opportunity.user_id == token_auth.current_user().id).filter(Opportunity.open == False).filter(Opportunity.status == "Closed Won").order_by(desc('date_created')).limit(5)
     closed_opps = [co.to_dict() for co in closed_opps]
-    return jsonify([recent_leads, recent_opps, closed_opps])
+    today_events = Event.query.join(Opportunity).join(User).filter(User.id == token_auth.current_user().id).filter(Event.date_time > today).filter(Event.date_time < tomorrow).order_by('date_time').limit(5)
+    today_events = [e.to_dict() for e in today_events]
+    return jsonify([recent_leads, recent_opps, closed_opps, today_events])
 
 # Create Lead
 @api.route('/newlead', methods=['POST'])
@@ -259,3 +261,37 @@ def get_events_this_week():
     this_week = datetime.today() + timedelta(days=7)
     events = Event.query.join(Opportunity).join(User).filter(User.id == token_auth.current_user().id).filter(Event.date_time > today).filter(Event.date_time < this_week).order_by('date_time').all()
     return jsonify([e.to_dict() for e in events])
+
+# Get Single Event
+@api.route('/events/<int:id>')
+@token_auth.login_required
+def get_single_event(id):
+    event = Event.query.get(id)
+    if event.opportunity.user_id != token_auth.current_user().id:
+        return abort(403)
+    else:
+        return jsonify(event.to_dict())
+
+# Edit Event
+@api.route('/edit/event/<int:id>', methods=['POST'])
+@token_auth.login_required
+def edit_event(id):
+    event = Event.query.get(id)
+    if event.opportunity.user_id != token_auth.current_user().id:
+        return abort(403)
+    else:
+        data = request.get_json()
+        event.from_dict(data)
+        event.save()
+        return jsonify(event.to_dict())
+
+# Delete Event
+@api.route('/delete/event/<int:id>', methods=['DELETE'])
+@token_auth.login_required
+def delete_event(id):
+    event = Event.query.get(id)
+    if event.opportunity.user_id != token_auth.current_user().id:
+        return abort(403)
+    else:
+        event.delete()
+        return jsonify({"status": "deleted"})
