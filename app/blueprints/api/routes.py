@@ -349,3 +349,20 @@ def search():
     opps = Opportunity.query.filter(Opportunity.user_id == token_auth.current_user().id).filter(Opportunity.business_name.match('%' + params + '%')).all()
     opps = [o.to_dict() for o in opps]
     return jsonify([leads, opps])
+
+
+# ##################################
+#             Reports
+# ##################################
+
+@api.route('/reports/closedleads')
+@token_auth.login_required
+def closed_leads():
+    leads = Lead.query.filter(Lead.user_id == token_auth.current_user().id).filter(Lead.open == False).order_by(desc('date_created'))
+    return jsonify([l.to_dict() for l in leads])
+
+@api.route('/reports/closedwonopportunities')
+@token_auth.login_required
+def closed_won_opps():
+    opps = Opportunity.query.filter(Opportunity.user_id == token_auth.current_user().id).filter(Opportunity.open == False).filter(Opportunity.status == "Closed Won").order_by(desc('date_created'))
+    return jsonify([o.to_dict() for o in opps])
