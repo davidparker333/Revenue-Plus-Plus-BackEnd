@@ -224,5 +224,38 @@ def get_activity_opp(id):
     opp = Opportunity.query.get(id)
     if opp.user_id != token_auth.current_user().id:
         return abort(403)
-    activity = Activity.query.filter(Activity.opportunity_id == id).order_by(desc('date'))
-    return jsonify([a.to_dict() for a in activity])
+    else:
+        activity = Activity.query.filter(Activity.opportunity_id == id).order_by(desc('date'))
+        return jsonify([a.to_dict() for a in activity])
+
+# Create Event on Opportunity
+@api.route('/addevent/<int:id>', methods=['POST'])
+@token_auth.login_required
+def create_opp_event(id):
+    opp = Opportunity.query.get(id)
+    if opp.user_id != token_auth.current_user().id:
+        return abort(403)
+    else:
+        event = Event()
+        data = request.get_json()
+        event.from_dict(data)
+        event.opportunity_id = opp.id
+        event.save()
+        return jsonify(event.to_dict())
+
+# Get Events
+@api.route('/allevents')
+@token_auth.login_required
+def get_all_events():
+    today = datetime.today()
+    events = Event.query.join(Opportunity).join(User).filter(User.id == token_auth.current_user().id).filter(Event.date_time > today).order_by('date_time').all()
+    return jsonify([e.to_dict() for e in events])
+
+# Get Events this week
+@api.route('/eventsthisweek')
+@token_auth.login_required
+def get_events_this_week():
+    today = datetime.today()
+    this_week = datetime.today() + timedelta(days=7)
+    events = Event.query.join(Opportunity).join(User).filter(User.id == token_auth.current_user().id).filter(Event.date_time > today).filter(Event.date_time < this_week).order_by('date_time').all()
+    return jsonify([e.to_dict() for e in events])

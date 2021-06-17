@@ -264,7 +264,8 @@ class Event(db.Model):
             "id": self.id,
             "date_time": self.date_time,
             "first_name": self.first_name,
-            "last_name": self.last_name
+            "last_name": self.last_name,
+            "event_name": self.event_name
         }
 
     def from_dict(self, data):
