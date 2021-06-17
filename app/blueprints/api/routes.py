@@ -6,6 +6,10 @@ from app.blueprints.api.models import User, Lead, Opportunity, Activity, Event
 from sqlalchemy import desc
 from .auth import token_auth
 
+# ##################################
+#           Registration
+# ##################################
+
 # Register a new user
 @api.route('/register', methods=['POST'])
 def register():
@@ -14,6 +18,11 @@ def register():
     user.from_dict(data)
     user.save()
     return jsonify(user.to_dict())
+
+
+# ##################################
+#           Home Page
+# ##################################
 
 # Home Page - Display Recent info from 4 categories
 @api.route('/crmhome', methods=['GET'])
@@ -30,6 +39,11 @@ def home():
     today_events = Event.query.join(Opportunity).join(User).filter(User.id == token_auth.current_user().id).filter(Event.date_time > today).filter(Event.date_time < tomorrow).order_by('date_time').limit(5)
     today_events = [e.to_dict() for e in today_events]
     return jsonify([recent_leads, recent_opps, closed_opps, today_events])
+
+
+# ##################################
+#               Leads
+# ##################################
 
 # Create Lead
 @api.route('/newlead', methods=['POST'])
@@ -105,6 +119,11 @@ def delete_lead(id):
     lead.save()
     return jsonify({"status": "deleted"})
 
+
+# ##################################
+#           Lead Activities 
+# ##################################
+
 # Create Lead Activity
 @api.route('/newactivity/lead/<int:id>', methods=['POST'])
 @token_auth.login_required
@@ -126,6 +145,11 @@ def get_activity_lead(id):
         return abort(403)
     activity = Activity.query.filter(Activity.lead_id == id).order_by(desc('date'))
     return jsonify([a.to_dict() for a in activity])
+
+
+# ##################################
+#           Lead Conversion
+# ##################################
         
 # Convert Lead to Opp
 @api.route('/convert/<int:id>', methods=['POST'])
@@ -142,6 +166,11 @@ def convert_lead(id):
     meeting.opportunity_id = opportunity.id
     meeting.save()
     return jsonify([opportunity.to_dict(), meeting.to_dict()])
+
+
+# ##################################
+#           Opportunities
+# ##################################
 
 # Get all opportunities
 @api.route('/allopenopportunities')
@@ -207,6 +236,11 @@ def closed_lost(id):
         opp.save()
     return jsonify(opp.to_dict())
 
+
+# ##################################
+#      Opportunitiy Activities
+# ##################################
+
 # Add Opportunity Activity
 @api.route('/newactivity/opportunity/<int:id>', methods=['POST'])
 @token_auth.login_required
@@ -229,6 +263,11 @@ def get_activity_opp(id):
     else:
         activity = Activity.query.filter(Activity.opportunity_id == id).order_by(desc('date'))
         return jsonify([a.to_dict() for a in activity])
+
+
+# ##################################
+#              Events
+# ##################################
 
 # Create Event on Opportunity
 @api.route('/addevent/<int:id>', methods=['POST'])
