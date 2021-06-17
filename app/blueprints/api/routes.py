@@ -20,11 +20,14 @@ def register():
 @api.route('/crmhome', methods=['GET'])
 @token_auth.login_required
 def home():
+    this_month = datetime.today() - timedelta(days=30)
     recent_leads = Lead.query.filter(Lead.user_id == token_auth.current_user().id).filter(Lead.open == True).order_by(desc('date_created')).limit(5)
     recent_leads = [l.to_dict() for l in recent_leads]
     recent_opps = Opportunity.query.filter(Opportunity.user_id == token_auth.current_user().id).filter(Opportunity.open == True).order_by(desc('date_created')).limit(5)
     recent_opps = [o.to_dict() for o in recent_opps]
-    return jsonify([recent_leads, recent_opps])
+    closed_opps = Opportunity.query.filter(Opportunity.user_id == token_auth.current_user().id).filter(Opportunity.open == False).filter(Opportunity.status == "Closed Won").order_by(desc('date_created')).limit(5)
+    closed_opps = [co.to_dict() for co in closed_opps]
+    return jsonify([recent_leads, recent_opps, closed_opps])
 
 # Create Lead
 @api.route('/newlead', methods=['POST'])
@@ -188,3 +191,38 @@ def closed_won(id):
         opp.status = "Closed Won"
         opp.save()
     return jsonify(opp.to_dict())
+
+# Close Lost Opportunity
+@api.route('/close/lost/opportunity/<int:id>', methods=['POST'])
+@token_auth.login_required
+def closed_lost(id):
+    opp = Opportunity.query.get(id)
+    if opp.user_id != token_auth.current_user().id:
+        return abort(403)
+    else:
+        opp.open = False
+        opp.status = "Closed Lost"
+        opp.save()
+    return jsonify(opp.to_dict())
+
+# Add Opportunity Activity
+@api.route('/newactivity/opportunity/<int:id>', methods=['POST'])
+@token_auth.login_required
+def post_activity_opp(id):
+    opp = Opportunity.query.get(id)
+    activity = Activity()
+    data = request.get_json()
+    activity.from_dict(data)
+    activity.opportunity_id = opp.id
+    activity.save()
+    return jsonify(activity.to_dict())
+
+# Get Opportunity Activities
+@api.route('/getactivity/opportunity/<int:id>')
+@token_auth.login_required
+def get_activity_opp(id):
+    opp = Opportunity.query.get(id)
+    if opp.user_id != token_auth.current_user().id:
+        return abort(403)
+    activity = Activity.query.filter(Activity.opportunity_id == id).order_by(desc('date'))
+    return jsonify([a.to_dict() for a in activity])
