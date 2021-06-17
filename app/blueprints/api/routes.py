@@ -334,3 +334,18 @@ def delete_event(id):
     else:
         event.delete()
         return jsonify({"status": "deleted"})
+
+
+# ##################################
+#             Search
+# ##################################
+
+@api.route('/search', methods=['GET'])
+@token_auth.login_required
+def search():
+    params = request.args.get('search')
+    leads = Lead.query.filter(Lead.user_id == token_auth.current_user().id).filter(Lead.open == True).filter(Lead.business_name.match('%' + params + '%')).all()
+    leads = [l.to_dict() for l in leads]
+    opps = Opportunity.query.filter(Opportunity.user_id == token_auth.current_user().id).filter(Opportunity.business_name.match('%' + params + '%')).all()
+    opps = [o.to_dict() for o in opps]
+    return jsonify([leads, opps])
