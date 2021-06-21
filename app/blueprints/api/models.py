@@ -117,7 +117,7 @@ class Lead(db.Model):
         return f'<Lead Object | {self.business_name}>'
 
     def __str__(self):
-        return f'Post - {self.id} - {self.business_name}'
+        return f'Lead - {self.id} - {self.business_name}'
 
     def to_dict(self):
         return {

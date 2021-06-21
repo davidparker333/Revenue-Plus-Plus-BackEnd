@@ -355,14 +355,54 @@ def search():
 #             Reports
 # ##################################
 
+# All Closed Lost Leads
 @api.route('/reports/closedleads')
 @token_auth.login_required
 def closed_leads():
-    leads = Lead.query.filter(Lead.user_id == token_auth.current_user().id).filter(Lead.open == False).order_by(desc('date_created'))
-    return jsonify([l.to_dict() for l in leads])
+    leads = Lead.query.filter(Lead.user_id == token_auth.current_user().id).filter(Lead.open == False).order_by(desc('date_created')).all()
+    opps = Opportunity.query.filter(Opportunity.user_id == token_auth.current_user().id).all()
+    converted_lead_ids = []
+    result = []
+    for opp in opps:
+        converted_lead_ids.append(opp.lead_id)
+    for lead in leads:
+        if lead.id not in converted_lead_ids:
+            result.append(lead)
+    return jsonify([l.to_dict() for l in result])
 
+# Closed Won Opps
 @api.route('/reports/closedwonopportunities')
 @token_auth.login_required
 def closed_won_opps():
     opps = Opportunity.query.filter(Opportunity.user_id == token_auth.current_user().id).filter(Opportunity.open == False).filter(Opportunity.status == "Closed Won").order_by(desc('date_created'))
     return jsonify([o.to_dict() for o in opps])
+
+# Closed Lost Opps
+@api.route('/reports/closedlostopportunities')
+@token_auth.login_required
+def closed_lost_opp():
+    opps = Opportunity.query.filter(Opportunity.user_id == token_auth.current_user().id).filter(Opportunity.open == False).filter(Opportunity.status == "Closed Lost").order_by(desc('date_created'))
+    return jsonify([o.to_dict() for o in opps])
+
+# High Value Opps
+@api.route('/reports/highvalueopps')
+@token_auth.login_required
+def high_value_opps():
+    params = request.args.get('value')
+    opps = Opportunity.query.filter(Opportunity.user_id == token_auth.current_user().id).filter(Opportunity.value >= params).order_by(desc('date_created'))
+    return jsonify([o.to_dict() for o in opps])
+
+# Low Value Opps
+@api.route('/reports/lowvalueopps')
+@token_auth.login_required
+def low_value_opps():
+    params = request.args.get('value')
+    opps = Opportunity.query.filter(Opportunity.user_id == token_auth.current_user().id).filter(Opportunity.value <= params).order_by(desc('date_created'))
+    return jsonify([o.to_dict() for o in opps])
+
+# All Converted Leads
+@api.route('/reports/convertedleads')
+@token_auth.login_required
+def converted_leads():
+    leads = Lead.query.join(Opportunity).filter(Opportunity.user_id == token_auth.current_user().id).order_by(desc('date_created'))
+    return jsonify([l.to_dict() for l in leads])
