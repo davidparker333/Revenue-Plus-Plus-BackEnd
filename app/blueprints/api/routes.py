@@ -1,4 +1,3 @@
-from re import L
 from . import bp as api
 from app import db
 from flask import request, jsonify, abort
