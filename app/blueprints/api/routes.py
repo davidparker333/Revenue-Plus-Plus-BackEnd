@@ -406,3 +406,28 @@ def low_value_opps():
 def converted_leads():
     leads = Lead.query.join(Opportunity).filter(Opportunity.user_id == token_auth.current_user().id).order_by(desc('date_created'))
     return jsonify([l.to_dict() for l in leads])
+
+# Closed Hot Leads
+@api.route('/reports/closedhotleads')
+@token_auth.login_required
+def closed_hot_leads():
+    leads = Lead.query.filter(Lead.user_id == token_auth.current_user().id).filter(Lead.open == False).filter(Lead.hot == True).order_by(desc('date_created')).all()
+    opps = Opportunity.query.filter(Opportunity.user_id == token_auth.current_user().id).all()
+    closed_hot_lead_ids = []
+    result = []
+    for opp in opps:
+        closed_hot_lead_ids.append(opp.lead_id)
+    for lead in leads:
+        if lead.id not in closed_hot_lead_ids:
+            result.append(lead)
+    return jsonify([l.to_dict() for l in result])
+
+# Lead Quantity by Date
+@api.route('/reports/leadquantity')
+@token_auth.login_required
+def lead_quantity():
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    leads = Lead.query.filter(Lead.user_id == token_auth.current_user().id).filter(Lead.date_created > start_date).filter(Lead.date_created < end_date).all()
+    leads = [l.to_dict() for l in leads]
+    return jsonify([leads, len(leads)])
